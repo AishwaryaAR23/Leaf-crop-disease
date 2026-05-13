@@ -1,0 +1,114 @@
+from google.colab import files
+uploaded = files.upload()
+
+import zipfile
+import os
+
+with zipfile.ZipFile("PlantVillage.zip", 'r') as zip_ref:
+    zip_ref.extractall("PlantVillage")
+
+!pip install tensorflow
+!pip install matplotlib
+
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
+import os
+
+import os
+print("Extracted folders:", os.listdir("PlantVillage"))
+
+data_path = 'PlantVillage'
+
+
+train_generator = train_datagen.flow_from_directory(
+    data_path,
+    target_size=(128, 128),
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+val_generator = train_datagen.flow_from_directory(
+    data_path,
+    target_size=(128, 128),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)
+
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+model = models.Sequential([
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3)),
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Conv2D(128, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Flatten(),
+    layers.Dense(128, activation='relu'),
+    layers.Dense(15, activation='softmax')
+])
+
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.summary()
+
+history = model.fit(
+    train_generator,
+    epochs=10,
+    validation_data=val_generator
+)
+
+model.save("crop_disease_model.h5")
+
+import os
+
+folder_path = "/content/PlantVillage/Tomato_healthy"
+image_files = os.listdir(folder_path)
+print(" Found files:", image_files[:5]) 
+
+from tensorflow.keras.preprocessing import image
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# Load and preprocess the image
+img_path = "/content/PlantVillage/Tomato_healthy/24336aa8-a0ad-404e-9669-3661d9920aec___GH_HL Leaf 435.1.JPG"
+img = image.load_img(img_path, target_size=(128, 128))
+img_array = image.img_to_array(img) / 255.0
+img_array = np.expand_dims(img_array, axis=0)
+
+# Predict using the trained model
+prediction = model.predict(img_array)
+class_names = list(train_generator.class_indices.keys())
+predicted_class = class_names[np.argmax(prediction)]
+
+# Check if it's healthy or diseased
+if "healthy" in predicted_class.lower():
+    health_status = "No Disease (Healthy)"
+else:
+    health_status = "Disease Detected"
+
+# Display the image and prediction
+plt.imshow(img)
+plt.axis('off')
+plt.title(f"Predicted: {predicted_class} | Status: {health_status}")
+plt.show()
+
+import matplotlib.pyplot as plt
+
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Val Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
